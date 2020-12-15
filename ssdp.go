@@ -67,13 +67,11 @@ func listenForSearchResponses() (*net.UDPConn, error) {
 }
 
 func buildSearchRequest(st string, mx time.Duration) ([]byte, *net.UDPAddr) {
-	// Placeholder to replace with * later on
-	replaceMePlaceHolder := "/replacemewithstar"
-
 	broadcastAddr, _ := net.ResolveUDPAddr("udp", BroadcastIP+":"+strconv.Itoa(Port))
 	request, _ := http.NewRequest("M-SEARCH",
-		"http://"+broadcastAddr.String()+replaceMePlaceHolder, strings.NewReader(""))
+		"http://"+broadcastAddr.String(), strings.NewReader(""))
 
+	request.URL.Path = "*"
 	headers := request.Header
 	headers.Set("User-Agent", "")
 	headers.Set("st", st)
@@ -86,12 +84,8 @@ func buildSearchRequest(st string, mx time.Duration) ([]byte, *net.UDPAddr) {
 	if err != nil {
 		panic("Fatal error writing to buffer. This should never happen (in theory).")
 	}
-	searchBytes = buffer.Bytes()
 
-	// Replace placeholder with *. Needed because request always escapes * when it shouldn't
-	searchBytes = bytes.Replace(searchBytes, []byte(replaceMePlaceHolder), []byte("*"), 1)
-
-	return searchBytes, broadcastAddr
+	return buffer.Bytes(), broadcastAddr
 }
 
 func readSearchResponses(reader searchReader, duration time.Duration) ([]SearchResponse, error) {
